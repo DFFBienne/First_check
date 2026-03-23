@@ -736,10 +736,10 @@ async function buildPDF(){
   const {width:W,height:H}=page.getSize();
   const fB=await doc.embedFont(StandardFonts.HelveticaBold);
   const fR=await doc.embedFont(StandardFonts.Helvetica);
-  // Embed logo
+  // Embed logo (JPEG)
   const logoBytes=Uint8Array.from(atob(LOGO_B64),c=>c.charCodeAt(0));
-  const logoImg=await doc.embedPng(logoBytes);
-  const logoDims=logoImg.scale(1);
+  const logoImg=await doc.embedJpg(logoBytes);
+  const logoNatW=logoImg.width, logoNatH=logoImg.height;
 
   const NAVY=rgb(.102,.180,.369),NAVY2=rgb(.141,.220,.439),NAVY3=rgb(.176,.259,.502);
   const WHITE=rgb(1,1,1);
@@ -767,7 +767,7 @@ async function buildPDF(){
   Txt(T.pdfTitle,ML,H-HH+13*MM,8.5,fB,WHITE);
   Txt(T.pdfNomInst+"  "+clip(D.nom_installation,200*MM,7,fR),ML,H-HH+7*MM,7,fR,WHITE);
   // Draw logo image top-right in header
-  const logoH=14*MM, logoW=logoH*(logoDims.width/logoDims.height);
+  const logoH=14*MM, logoW=logoH*(logoNatW/logoNatH);
   page.drawImage(logoImg,{x:W-MR-logoW, y:H-HH+(HH-logoH)/2, width:logoW, height:logoH});
   TxtR(T.pdfPage+" "+(D.page||'01'),W-MR,H-HH+7*MM,7,fR,WHITE);
 
