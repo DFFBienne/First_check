@@ -71,6 +71,16 @@ body{padding-bottom:80px;}
 .btn-io{background:#fff;color:var(--navy);border:1px solid var(--border);border-radius:10px;padding:13px 15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .toast{position:fixed;top:72px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--navy);color:#fff;padding:9px 18px;border-radius:20px;font-size:12.5px;z-index:999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Signature pad */
+.sig-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;}
+.sig-modal{background:#fff;border-radius:20px 20px 0 0;padding:18px;width:100%;max-width:520px;}
+.sig-modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.sig-modal-hd h3{font-size:15px;font-weight:700;color:var(--navy);}
+.sig-canvas{width:100%;height:220px;border:1.5px solid var(--border);border-radius:10px;background:#f9f9f9;touch-action:none;cursor:crosshair;display:block;}
+.sig-btns{display:flex;gap:8px;margin-top:12px;}
+.sig-btn-clear{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;color:var(--muted);}
+.sig-btn-ok{flex:2;background:var(--red);color:#fff;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -116,7 +126,7 @@ body{padding-bottom:80px;}
     <div class="row3">
       <div class="f"><label id="lbl-tension">Tension réseau</label><input type="text" id="tension" value="240V" placeholder="Ex: 240V"/></div>
       <div class="f"><label id="lbl-instrument">Instrument</label><input type="text" id="instrument" value="Metrel"/></div>
-      <div class="f"><label id="lbl-inventaire">N° inventaire</label><input type="text" id="num_inventaire" value="I-68266"/></div>
+      <div class="f"><label id="lbl-inventaire">N° inventaire</label><input type="text" id="num_inventaire" placeholder="Ex: I-68266"/></div>
     </div>
     <div class="row2">
       <div class="f"><label id="lbl-facteur">Facteur Icc</label>
@@ -171,6 +181,15 @@ body{padding-bottom:80px;}
       <div class="f"><label id="lbl-lieu">Lieu</label><input type="text" id="lieu" placeholder="Ville..."/></div>
     </div>
     <div class="f" style="margin-bottom:0;"><label id="lbl-date">Date</label><input type="date" id="date_sig"/></div>
+    <div class="f" style="margin-bottom:0;margin-top:11px;">
+      <label id="lbl-sig">Signature</label>
+      <div style="position:relative;">
+        <canvas id="sig-preview" style="width:100%;height:80px;border:1px solid var(--border);border-radius:8px;background:#f9f9f9;display:block;"></canvas>
+        <div id="sig-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;pointer-events:none;">Appuyez pour signer...</div>
+        <button onclick="openSigPad()" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;"></button>
+      </div>
+      <button id="sig-clear-btn" onclick="clearSignature()" style="display:none;margin-top:5px;background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;">Effacer la signature</button>
+    </div>
   </div>
 </div>
 
@@ -250,6 +269,8 @@ const I18N = {
     lblChamp:       "Champ tour.",
     lblChute:       "Chute tension %",
     lblDesig:       "Désignation du circuit...",
+    lblSig:          "Signature",
+    sigPlaceholder:  "Appuyez pour signer...",
     vcLabels: [
       "Protection de base des contacts directs",
       "Identification des coupe-surintensités, liste de référence",
@@ -351,6 +372,8 @@ const I18N = {
     lblChamp:       "Drehfeld",
     lblChute:       "Spannungsabfall %",
     lblDesig:       "Stromkreisbezeichnung...",
+    lblSig:          "Unterschrift",
+    sigPlaceholder:  "Tippen zum Unterschreiben...",
     vcLabels: [
       "Basisschutz gegen direktes Berühren",
       "Kennzeichnung der Überstromschutzgeräte, Referenzliste",
@@ -451,6 +474,8 @@ const I18N = {
     lblChamp:       "Campo rot.",
     lblChute:       "Caduta tensione %",
     lblDesig:       "Designazione del circuito...",
+    lblSig:          "Firma",
+    sigPlaceholder:  "Tocca per firmare...",
     vcLabels: [
       "Protezione di base dei contatti diretti",
       "Identificazione dei dispositivi di protezione, lista di riferimento",
@@ -547,6 +572,8 @@ function applyLang() {
   st('lbl-date', T.lblDate);
 
   T.vcLabels.forEach((lbl, i) => st('vc-lbl-'+(i+1), lbl));
+  st('lbl-sig', T.lblSig||'Signature');
+  const ph=$('sig-placeholder');if(ph)ph.textContent=T.sigPlaceholder||'Appuyez pour signer...';
 
   // Update circuit sub-labels already rendered
   document.querySelectorAll('[data-lbl]').forEach(el => {
@@ -611,7 +638,7 @@ function addCircuit(data){
     <span class="sub-lbl" data-lbl="sublDdr">${T.sublDdr}</span>
     <div class="mg">
       <div class="mf"><label data-lbl="lblDdrInom">${T.lblDdrInom}</label><input type="number" id="ddr_inom_${id}" value="${(data&&data.ddr_inom)||''}"/></div>
-      <div class="mf"><label data-lbl="lblDdrIdelta">${T.lblDdrIdelta}</label><select id="ddr_idelta_${id}"><option value="">—</option><option>10</option><option>30</option><option>100</option><option>300</option><option>500</option></select></div>
+      <div class="mf"><label data-lbl="lblDdrIdelta">${T.lblDdrIdelta}</label><input type="number" id="ddr_idelta_${id}" value="${(data&&data.ddr_idelta)||''}" placeholder="mA"/></div>
       <div class="mf"><label data-lbl="lblDdrTemps">${T.lblDdrTemps}</label><input type="number" id="ddr_temps_${id}" value="${(data&&data.ddr_temps)||''}"/></div>
       <div class="mf"><label data-lbl="lblChamp">${T.lblChamp}</label><select id="champ_${id}"><option value="">—</option><option>OK</option><option>NOK</option><option>N/A</option></select></div>
       <div class="mf"><label data-lbl="lblChute">${T.lblChute}</label><input type="number" step="0.1" id="chute_${id}" value="${(data&&data.chute)||''}"/></div>
@@ -636,7 +663,9 @@ const FIELDS=['nom_installation','num_tableau','page','objet','num_compteur','cc
 function saveData(){
   const d={lang:currentLang};
   FIELDS.forEach(f=>d[f]=gv(f));
+  d.sigData=sigData;
   d.circuits=circuitIds.filter(id=>!!$('cc-'+id)).map(id=>({desig:gv('desig_'+id),ctype:gv('ctype_'+id),csect:gv('csect_'+id),courbe:gv('courbe_'+id),inom:gv('inom_'+id),icc_max_lpe:gv('icc_max_lpe_'+id),icc_min_lpe:gv('icc_min_lpe_'+id),icc_max_ln:gv('icc_max_ln_'+id),icc_min_ln:gv('icc_min_ln_'+id),riso:gv('riso_'+id),rlo:gv('rlo_'+id),ddr_inom:gv('ddr_inom_'+id),ddr_idelta:gv('ddr_idelta_'+id),ddr_temps:gv('ddr_temps_'+id),champ:gv('champ_'+id),chute:gv('chute_'+id)}));
+  d.sigData=sigData;
   try{localStorage.setItem(SKEY,JSON.stringify(d));markSaved();}catch(e){showToast('Erreur sauvegarde');}
 }
 function loadData(){
@@ -650,6 +679,7 @@ function loadData(){
     }
     FIELDS.forEach(f=>sv(f,d[f]));
     if(d.circuits&&d.circuits.length)d.circuits.forEach(c=>addCircuit(c));
+    if(d.sigData){sigData=d.sigData;const prev=$('sig-preview');const ctx=prev.getContext('2d');prev.width=prev.offsetWidth*window.devicePixelRatio;prev.height=prev.offsetHeight*window.devicePixelRatio;ctx.scale(window.devicePixelRatio,window.devicePixelRatio);const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,prev.offsetWidth,prev.offsetHeight);};img.src=sigData;$('sig-placeholder').style.display='none';$('sig-clear-btn').style.display='block';}
     markSaved();showToast(I18N[currentLang].restored);
   }catch(e){console.error(e);}
 }
@@ -661,6 +691,7 @@ function clearData(){if(!confirm(I18N[currentLang].confirmClear))return;localSto
 function collectAll(){
   const d={lang:currentLang, _version:1, _app:'SBB_Protocole'};
   FIELDS.forEach(f=>d[f]=gv(f));
+  d.sigData=sigData;
   d.circuits=circuitIds.filter(id=>!!$('cc-'+id)).map(id=>({
     desig:gv('desig_'+id),ctype:gv('ctype_'+id),csect:gv('csect_'+id),
     courbe:gv('courbe_'+id),inom:gv('inom_'+id),
@@ -708,6 +739,7 @@ function importData(evt){
       // Restore circuits
       if(d.circuits&&d.circuits.length)d.circuits.forEach(c=>addCircuit(c));
       // Save to localStorage
+      if(d.sigData){sigData=d.sigData;}
       localStorage.setItem(SKEY,JSON.stringify(d));
       markSaved(); updateBadge();
       showToast('Import réussi ✓');
@@ -867,7 +899,16 @@ async function buildPDF(){
   });
   const sigY=BY+BH-5.5*MM-2*9*MM-8*MM;
   Txt(T.pdfSignature,X3+2*MM,sigY+4*MM,5.8,fB,DGRAY);
-  L(X3+18*MM,sigY+4*MM,X3+C3W-4*MM,sigY+4*MM,MGRAY,.6);
+  if(sigData){
+    try{
+      const sigBytes=Uint8Array.from(atob(sigData.split(',')[1]),c=>c.charCodeAt(0));
+      const sigImg=await doc.embedPng(sigBytes);
+      const sigW=C3W-20*MM, sigH=sigW*(sigImg.height/sigImg.width);
+      page.drawImage(sigImg,{x:X3+2*MM,y:sigY-sigH+1*MM,width:sigW,height:Math.min(sigH,14*MM)});
+    }catch(e){}
+  } else {
+    L(X3+18*MM,sigY+4*MM,X3+C3W-4*MM,sigY+4*MM,MGRAY,.6);
+  }
 
   // 5. FOOTER
   R(0,0,W,5*MM,LGRAY);
@@ -883,10 +924,113 @@ async function buildPDF(){
   setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// SIGNATURE PAD
+// ═══════════════════════════════════════════════════════════
+let sigData = null; // base64 PNG of signature
+
+function openSigPad(){
+  const modal = $('sig-modal');
+  const canvas = $('sig-canvas');
+  modal.style.display = 'flex';
+  // Size canvas to actual pixel size
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  let drawing = false, lastX = 0, lastY = 0;
+
+  function getPos(e){
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return {x: src.clientX - r.left, y: src.clientY - r.top};
+  }
+  function start(e){ e.preventDefault(); drawing=true; const p=getPos(e); lastX=p.x; lastY=p.y; }
+  function move(e){ e.preventDefault(); if(!drawing)return; const p=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; }
+  function stop(){ drawing=false; }
+
+  // Remove old listeners by replacing canvas
+  const newCanvas = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas, canvas);
+  newCanvas.width = canvas.width; newCanvas.height = canvas.height;
+  const ctx2 = newCanvas.getContext('2d');
+  ctx2.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx2.strokeStyle = '#1a1a2e'; ctx2.lineWidth = 2; ctx2.lineCap = 'round'; ctx2.lineJoin = 'round';
+  let drawing2=false, lx=0, ly=0;
+  function getPos2(e){ const r=newCanvas.getBoundingClientRect(); const src=e.touches?e.touches[0]:e; return {x:src.clientX-r.left,y:src.clientY-r.top}; }
+  newCanvas.addEventListener('mousedown', e=>{ e.preventDefault(); drawing2=true; const p=getPos2(e); lx=p.x; ly=p.y; });
+  newCanvas.addEventListener('mousemove', e=>{ e.preventDefault(); if(!drawing2)return; const p=getPos2(e); ctx2.beginPath(); ctx2.moveTo(lx,ly); ctx2.lineTo(p.x,p.y); ctx2.stroke(); lx=p.x; ly=p.y; });
+  newCanvas.addEventListener('mouseup', ()=>drawing2=false);
+  newCanvas.addEventListener('touchstart', e=>{ e.preventDefault(); drawing2=true; const p=getPos2(e); lx=p.x; ly=p.y; }, {passive:false});
+  newCanvas.addEventListener('touchmove', e=>{ e.preventDefault(); if(!drawing2)return; const p=getPos2(e); ctx2.beginPath(); ctx2.moveTo(lx,ly); ctx2.lineTo(p.x,p.y); ctx2.stroke(); lx=p.x; ly=p.y; }, {passive:false});
+  newCanvas.addEventListener('touchend', ()=>drawing2=false);
+}
+
+function clearSigPad(){
+  const c = $('sig-canvas') || document.querySelector('#sig-modal canvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+}
+
+function confirmSignature(){
+  const c = $('sig-modal').querySelector('canvas');
+  if(!c) return;
+  sigData = c.toDataURL('image/png');
+  // Copy to preview
+  const preview = $('sig-preview');
+  const pCtx = preview.getContext('2d');
+  preview.width = preview.offsetWidth * window.devicePixelRatio;
+  preview.height = preview.offsetHeight * window.devicePixelRatio;
+  pCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const img = new Image();
+  img.onload = ()=>{ pCtx.clearRect(0,0,preview.width,preview.height); pCtx.drawImage(img,0,0,preview.offsetWidth,preview.offsetHeight); };
+  img.src = sigData;
+  $('sig-placeholder').style.display = 'none';
+  $('sig-clear-btn').style.display = 'block';
+  $('sig-modal').style.display = 'none';
+  markUnsaved(); clearTimeout(autoTimer); autoTimer=setTimeout(saveData,1800);
+}
+
+function clearSignature(){
+  sigData = null;
+  const preview = $('sig-preview');
+  const ctx = preview.getContext('2d');
+  ctx.clearRect(0,0,preview.width,preview.height);
+  $('sig-placeholder').style.display = 'flex';
+  $('sig-clear-btn').style.display = 'none';
+  markUnsaved();
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', e=>{ if(e.target.id==='sig-modal') $('sig-modal').style.display='none'; });
+
 window.addEventListener('DOMContentLoaded',()=>{
   $('date_sig').value=new Date().toISOString().slice(0,10);
   loadData();
 });
 </script>
+
+<div id="sig-modal" class="sig-modal-bg" style="display:none;">
+  <div class="sig-modal">
+    <div class="sig-modal-hd">
+      <h3 id="sig-modal-title">Signature</h3>
+      <span style="font-size:12px;color:var(--muted);" id="sig-modal-hint">Signez dans le cadre ci-dessous</span>
+    </div>
+    <canvas id="sig-canvas" class="sig-canvas"></canvas>
+    <div class="sig-btns">
+      <button class="sig-btn-clear" onclick="clearSigPad()">Effacer</button>
+      <button class="sig-btn-ok" onclick="confirmSignature()">Confirmer</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
