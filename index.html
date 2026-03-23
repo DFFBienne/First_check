@@ -903,8 +903,16 @@ async function buildPDF(){
     try{
       const sigBytes=Uint8Array.from(atob(sigData.split(',')[1]),c=>c.charCodeAt(0));
       const sigImg=await doc.embedPng(sigBytes);
-      const sigW=C3W-20*MM, sigH=sigW*(sigImg.height/sigImg.width);
-      page.drawImage(sigImg,{x:X3+2*MM,y:sigY-sigH+1*MM,width:sigW,height:Math.min(sigH,14*MM)});
+      // Zone disponible pour la signature : entre le bas de la colonne et sigY+4mm
+      const availH=sigY+2*MM-BY;        // hauteur dispo au-dessus de la ligne
+      const sigH=Math.min(availH, 16*MM);
+      const sigW=sigH*(sigImg.width/sigImg.height);
+      const clampW=Math.min(sigW, C3W-6*MM);
+      const clampH=clampW*(sigImg.height/sigImg.width);
+      // Centrer horizontalement, positionner juste au-dessus du label Signature
+      const sigX=X3+(C3W-clampW)/2;
+      const sigBottom=sigY+1*MM;         // bord inférieur = juste sous le label
+      page.drawImage(sigImg,{x:sigX, y:sigBottom, width:clampW, height:clampH});
     }catch(e){}
   } else {
     L(X3+18*MM,sigY+4*MM,X3+C3W-4*MM,sigY+4*MM,MGRAY,.6);
