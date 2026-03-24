@@ -878,8 +878,8 @@ async function buildPDF(){
 
   // ── En-têtes rowA — fonds colorés par groupe ──
   const grpDefs=[
-    {c:[0,1],col:NAVY},{c:[2,3],col:NAVY2},{c:[4,5],col:NAVY2},
-    {c:[6,7,8,9,10,11],col:NAVY3},{c:[12,13,14],col:NAVY2},{c:[15,16],col:NAVY2}
+    {c:[0,1],col:NAVY},{c:[2,3],col:NAVY},{c:[4,5],col:NAVY},
+    {c:[6,7,8,9,10,11],col:NAVY},{c:[12,13,14],col:NAVY},{c:[15,16],col:NAVY}
   ];
   grpDefs.forEach(g=>{
     const x=colX(g.c[0]),w=g.c.reduce((a,c)=>a+CW[c],0);
@@ -888,7 +888,7 @@ async function buildPDF(){
 
   // ── rowB — même couleur de fond que le groupe rowA correspondant ──
   // Mapping colonne → couleur de groupe
-  const colGrpColor=[NAVY,NAVY,NAVY2,NAVY2,NAVY2,NAVY2,NAVY3,NAVY3,NAVY3,NAVY3,NAVY3,NAVY3,NAVY2,NAVY2,NAVY2,NAVY2,NAVY2];
+  const colGrpColor=Array(17).fill(NAVY);
   for(let ci=0;ci<17;ci++){
     const x=colX(ci),w=CW[ci];
     R(x,headerBY,w,HRB,colGrpColor[ci]);
