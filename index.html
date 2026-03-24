@@ -793,7 +793,7 @@ async function buildPDF(){
   const logoJpgBytes=Uint8Array.from(atob(LOGO_B64),c=>c.charCodeAt(0));
   const logoJpgImg=await doc.embedJpg(logoJpgBytes);
 
-  const NAVY=rgb(.102,.180,.369),NAVY2=rgb(.141,.220,.439),NAVY3=rgb(.176,.259,.502);
+  const NAVY=rgb(.102,.180,.369),NAVY2=rgb(.102,.180,.369),NAVY3=rgb(.102,.180,.369);
   const WHITE=rgb(1,1,1);
   const LGRAY=rgb(.941,.945,.969),LG2=rgb(.910,.914,.957),MGRAY=rgb(.816,.820,.847);
   const DGRAY=rgb(.314,.353,.431),BLACK=rgb(.102,.102,.180);
