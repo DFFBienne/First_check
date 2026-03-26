@@ -88,6 +88,15 @@ body{padding-bottom:80px;}
 /* Import choice modal */
 .import-choice-btn{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer;width:100%;transition:border-color .15s,background .15s;}
 .import-choice-btn:active{background:#eef0f5;border-color:var(--navy);}
+
+.cable-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;}
+.cable-modal{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:600px;max-height:80vh;overflow-y:auto;}
+.cable-modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.cable-modal-hd h3{font-size:15px;font-weight:700;color:var(--navy);}
+.cable-modal table{width:100%;border-collapse:collapse;font-size:12px;}
+.cable-modal th{background:var(--navy);color:#fff;padding:7px 8px;font-size:11px;font-weight:700;text-align:left;}
+.cable-modal tr:last-child td{border-bottom:none!important;}
+.cable-btn-close{margin-top:14px;width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -276,6 +285,18 @@ const I18N = {
     lblFacteur:     "Facteur Icc",
     lblValFacteur:  "Valeur facteur",
     lblRem:         "Remarques générales",
+    cableHelpTitle: "Types de câbles – Aide-mémoire",
+    cableCol1:      "Nom courant (CH)",
+    cableCol2:      "Désignation harmonisée",
+    cableCol3:      "Description technique",
+    cableTable: [
+      ["Fil T","H07V-U","Fil rigide massif (isolation PVC). Standard pour les tubes."],
+      ["TT","CH-N1VV-U","Câble de transport (0.6/1kV) à conducteurs rigides."],
+      ["TD","H05VV-F","Câble souple sous gaine PVC (ex: lampes, petits appareils)."],
+      ["TT-Flex","CH-N1VV-K","Câble de puissance (0.6/1kV) avec conducteurs souples."],
+      ["PUR-PUR","H07BQ-F","Câble ultra-résistant (orange/bleu) avec isolation Polyuréthane."],
+      ["TTclt","CH-N1VCV-U","Câble TT avec écran en cuivre (blindage) pour protection CEM."]
+    ],
     lblNomPrenom:   "Nom et prénom",
     lblLieu:        "Lieu",
     lblDate:        "Date",
@@ -383,6 +404,18 @@ const I18N = {
     lblFacteur:     "Icc-Faktor",
     lblValFacteur:  "Faktorwert",
     lblRem:         "Allgemeine Bemerkungen",
+    cableHelpTitle: "Kabeltypen – Gedächtnisstütze",
+    cableCol1:      "Kurzname (CH)",
+    cableCol2:      "Harmonisierte Bezeichnung",
+    cableCol3:      "Technische Beschreibung",
+    cableTable: [
+      ["Fil T","H07V-U","Massiver starrer Leiter (PVC-Isolation). Standard für Rohre."],
+      ["TT","CH-N1VV-U","Transportkabel (0.6/1kV) mit starren Leitern."],
+      ["TD","H05VV-F","Flexibles Kabel unter PVC-Mantel (z.B. Lampen, Kleingeräte)."],
+      ["TT-Flex","CH-N1VV-K","Leistungskabel (0.6/1kV) mit flexiblen Leitern."],
+      ["PUR-PUR","H07BQ-F","Hochbeständiges Kabel (orange/blau) mit Polyurethan-Mantel."],
+      ["TTclt","CH-N1VCV-U","TT-Kabel mit Kupferschirm (Abschirmung) für EMV-Schutz."]
+    ],
     lblNomPrenom:   "Name und Vorname",
     lblLieu:        "Ort",
     lblDate:        "Datum",
@@ -489,6 +522,18 @@ const I18N = {
     lblFacteur:     "Fattore Icc",
     lblValFacteur:  "Valore fattore",
     lblRem:         "Osservazioni generali",
+    cableHelpTitle: "Tipi di cavi – Promemoria",
+    cableCol1:      "Nome corrente (CH)",
+    cableCol2:      "Designazione armonizzata",
+    cableCol3:      "Descrizione tecnica",
+    cableTable: [
+      ["Fil T","H07V-U","Conduttore rigido massiccio (PVC). Standard per tubi."],
+      ["TT","CH-N1VV-U","Cavo di trasporto (0.6/1kV) con conduttori rigidi."],
+      ["TD","H05VV-F","Cavo flessibile sotto guaina PVC (es: lampade, piccoli apparecchi)."],
+      ["TT-Flex","CH-N1VV-K","Cavo di potenza (0.6/1kV) con conduttori flessibili."],
+      ["PUR-PUR","H07BQ-F","Cavo ultra-resistente (arancio/blu) con guaina Poliuretano."],
+      ["TTclt","CH-N1VCV-U","Cavo TT con schermo in rame (blindatura) per protezione CEM."]
+    ],
     lblNomPrenom:   "Nome e cognome",
     lblLieu:        "Luogo",
     lblDate:        "Data",
@@ -670,7 +715,14 @@ function addCircuit(data){
     </div>
     <span class="sub-lbl" data-lbl="sublCana">${T.sublCana}</span>
     <div class="mg">
-      <div class="mf"><label data-lbl="lblCtype">${T.lblCtype}</label><input type="text" id="ctype_${id}" value="${(data&&data.ctype)||''}" placeholder="NYM"/></div>
+      <div class="mf">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;">
+          <label data-lbl="lblCtype" style="font-size:9.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.2px;margin:0;">${T.lblCtype}</label>
+          <button type="button" onclick="showCableHelp()" style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--navy);background:var(--navy);color:#fff;font-size:9px;font-weight:700;cursor:pointer;line-height:1;padding:0;flex-shrink:0;" title="Aide">i</button>
+        </div>
+        <input type="text" id="ctype_${id}" value="${(data&&data.ctype)||''}" placeholder="NYM" list="ctype-list" autocomplete="off"/>
+        <datalist id="ctype-list"><option value="H07V-U"/><option value="CH-N1VV-U"/><option value="H05VV-F"/><option value="CH-N1VV-K"/><option value="H07BQ-F"/><option value="CH-N1VCV-U"/></datalist>
+      </div>
       <div class="mf"><label data-lbl="lblCsect">${T.lblCsect}</label><input type="text" id="csect_${id}" value="${(data&&data.csect)||''}" placeholder="3×2.5 mm²"/></div>
     </div>
     <span class="sub-lbl" data-lbl="sublCoupe">${T.sublCoupe}</span>
@@ -708,6 +760,21 @@ function removeCircuit(id){
   circuitIds.forEach((cid,i)=>{const b=$('cn-'+cid);if(b)b.textContent=i+1;});
   updateBadge();saveData();
 }
+
+// ── Aide-mémoire câbles ──────────────────────────────────────
+function showCableHelp(){
+  const T=I18N[currentLang];
+  document.getElementById('cable-help-tbody').innerHTML=T.cableTable.map(r=>
+    '<tr><td style="padding:6px 8px;border-bottom:1px solid #e8ebf5;font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;">'+r[0]+'</td><td style="padding:6px 8px;border-bottom:1px solid #e8ebf5;font-size:12px;font-weight:600;white-space:nowrap;">'+r[1]+'</td><td style="padding:6px 8px;border-bottom:1px solid #e8ebf5;font-size:12px;color:var(--muted);line-height:1.4;">'+r[2]+'</td></tr>'
+  ).join('');
+  document.getElementById('cable-help-title').textContent=T.cableHelpTitle||'Types de câbles';
+  document.getElementById('cable-help-col1').textContent=T.cableCol1||'Nom courant';
+  document.getElementById('cable-help-col2').textContent=T.cableCol2||'Désignation';
+  document.getElementById('cable-help-col3').textContent=T.cableCol3||'Description';
+  document.getElementById('cable-help-modal').style.display='flex';
+}
+function closeCableHelp(){document.getElementById('cable-help-modal').style.display='none';}
+
 function updateBadge(){$('cct').textContent=circuitIds.length;}
 
 // ═══════════════════════════════════════════════════════════
@@ -1183,6 +1250,24 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
+
+<div id="cable-help-modal" class="cable-modal-bg" style="display:none;" onclick="if(event.target===this)closeCableHelp()">
+  <div class="cable-modal">
+    <div class="cable-modal-hd">
+      <h3 id="cable-help-title">Types de câbles</h3>
+      <button onclick="closeCableHelp()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;">×</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th id="cable-help-col1">Nom courant</th>
+        <th id="cable-help-col2">Désignation</th>
+        <th id="cable-help-col3">Description</th>
+      </tr></thead>
+      <tbody id="cable-help-tbody"></tbody>
+    </table>
+    <button class="cable-btn-close" onclick="closeCableHelp()">Fermer</button>
+  </div>
+</div>
 <div id="sig-modal" class="sig-modal-bg" style="display:none;">
   <div class="sig-modal">
     <div class="sig-modal-hd">
