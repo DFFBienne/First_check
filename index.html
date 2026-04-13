@@ -1311,25 +1311,31 @@ async function shareAction(action){
   }
   await _doShareAction(action,blob,filename,_shareMode==='pdf'?'application/pdf':'application/json');
 }
-async function _doShareAction(action,blob,filename,mimeType){
-  const url=URL.createObjectURL(blob);
-  if(action==='save'){
-    const a=document.createElement('a');a.href=url;a.download=filename;a.target='_blank';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),3000);
-  } else if(action==='mail'){
-    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>{window.open('mailto:?subject='+encodeURIComponent('Protocole SBB CFF FFS — '+filename)+'&body='+encodeURIComponent('Veuillez trouver ci-joint : '+filename));URL.revokeObjectURL(url);},800);
-  } else if(action==='teams'){
-    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>{window.open('https://teams.microsoft.com/l/chat/0/0?message='+encodeURIComponent('Protocole SBB CFF FFS : '+filename+'\nFichier téléchargé — veuillez le joindre manuellement.'));URL.revokeObjectURL(url);},800);
-  } else if(action==='native'){
-    try{
-      const file=new File([blob],filename,{type:mimeType});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:filename});}
-      else{await navigator.share({title:filename,text:'Protocole SBB CFF FFS — '+filename});}
-    }catch(e){if(e.name!=='AbortError')showToast('Partage annulé',2000);}
-    URL.revokeObjectURL(url);
+async function _doShareAction(action, blob, filename, mimeType){
+  const url = URL.createObjectURL(blob);
+
+  if(action === 'save'){
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.target = '_blank';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+  } else if(action === 'native'){
+    try {
+      const file = new File([blob], filename, {type: mimeType});
+      if(navigator.canShare && navigator.canShare({files: [file]})){
+        await navigator.share({files: [file], title: 'SBB CFF FFS — ' + filename, text: filename});
+      } else if(navigator.share){
+        // Fallback: share URL only
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        await navigator.share({title: 'SBB CFF FFS — ' + filename, text: filename});
+      }
+    } catch(e) {
+      if(e.name !== 'AbortError') showToast('Erreur: ' + e.message, 3000);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
   }
 }
 
@@ -1386,22 +1392,14 @@ window.addEventListener('DOMContentLoaded',()=>{
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button class="share-action-btn" onclick="shareAction('save')">
         <span class="share-icon">💾</span>
-        <div><div class="share-lbl">Enregistrer sur l'appareil</div><div class="share-sub">Téléchargement direct</div></div>
+        <div><div class="share-lbl" id="share-lbl-save">Enregistrer sur l'appareil</div><div class="share-sub">Téléchargement direct</div></div>
       </button>
-      <button class="share-action-btn" onclick="shareAction('mail')">
-        <span class="share-icon">✉️</span>
-        <div><div class="share-lbl">Envoyer par e-mail</div><div class="share-sub">Ouvre votre application e-mail</div></div>
-      </button>
-      <button class="share-action-btn" onclick="shareAction('teams')">
-        <span class="share-icon">💬</span>
-        <div><div class="share-lbl">Envoyer via Teams</div><div class="share-sub">Ouvre Microsoft Teams</div></div>
-      </button>
-      <button class="share-action-btn" id="share-btn-native" onclick="shareAction('native')" style="display:none;">
+      <button class="share-action-btn" id="share-btn-native" onclick="shareAction('native')">
         <span class="share-icon">📤</span>
-        <div><div class="share-lbl">Autres applications...</div><div class="share-sub">WhatsApp, Drive, Messages...</div></div>
+        <div><div class="share-lbl" id="share-lbl-native">Autres applications...</div><div class="share-sub">WhatsApp, Drive, Messages...</div></div>
       </button>
     </div>
-    <button onclick="closeShareModal()" style="margin-top:12px;background:none;border:none;color:var(--muted);font-size:13px;padding:8px;cursor:pointer;text-decoration:underline;width:100%;">Annuler</button>
+    <button onclick="closeShareModal()" style="margin-top:12px;background:none;border:none;color:var(--muted);font-size:13px;padding:8px;cursor:pointer;text-decoration:underline;width:100%;" id="share-cancel-btn">Annuler</button>
   </div>
 </div>
 <div id="sig-modal" class="sig-modal-bg" style="display:none;">
