@@ -966,7 +966,7 @@ function doImport(mode){
 async function generatePDF(){
   saveData();
   const btn=$('pdfBtn');btn.disabled=true;$('btn-pdf-lbl').textContent=I18N[currentLang].pdfLoading;
-  try{await buildPDF();showToast(I18N[currentLang].pdfOk);}
+  try{const {blob,filename}=await buildPDFBlob();const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=filename;a.target="_blank";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),3000);showToast(I18N[currentLang].pdfOk);}
   catch(e){console.error(e);showToast('Erreur: '+e.message,4000);}
   finally{btn.disabled=false;$('btn-pdf-lbl').textContent=I18N[currentLang].btnPdf;}
 }
