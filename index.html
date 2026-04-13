@@ -2646,14 +2646,15 @@ async function _doShareAction(action, blob, filename, mimeType){
 
   } else if(action === 'native'){
     try {
-      const file = new File([blob], filename, {type: mimeType});
+      // application/json n'est pas supporté par Web Share API — utiliser text/plain
+      const shareType = mimeType === 'application/json' ? 'text/plain' : mimeType;
+      const shareFilename = mimeType === 'application/json'
+        ? filename.replace('.json', '.txt')
+        : filename;
+      const file = new File([blob], shareFilename, {type: shareType});
       if(navigator.canShare && navigator.canShare({files: [file]})){
-        await navigator.share({files: [file], title: 'SBB CFF FFS — ' + filename, text: filename});
+        await navigator.share({files: [file], title: 'SBB CFF FFS — ' + filename});
       } else if(navigator.share){
-        // Fallback: share URL only
-        const a = document.createElement('a');
-        a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
         await navigator.share({title: 'SBB CFF FFS — ' + filename, text: filename});
       }
     } catch(e) {
