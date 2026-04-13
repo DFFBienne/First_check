@@ -19,10 +19,13 @@
     </div>
     <div class="hdr-bottom-row">
       <div class="hdr-title" id="hdr-title">Premières vérifications<br>par l'installateur électricien</div>
-      <div class="lang-switcher">
-        <button class="lang-btn active" onclick="setLang('fr')">FR</button>
-        <button class="lang-btn" onclick="setLang('de')">DE</button>
-        <button class="lang-btn" onclick="setLang('it')">IT</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        <div style="font-size:9px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:.5px;">V1.0.1</div>
+        <div class="lang-switcher">
+          <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+          <button class="lang-btn" onclick="setLang('de')">DE</button>
+          <button class="lang-btn" onclick="setLang('it')">IT</button>
+        </div>
       </div>
     </div>
   </div>
@@ -127,10 +130,34 @@
 <div class="bottom">
   <button class="btn-clear" onclick="clearData()" title="Effacer">🗑</button>
   <button class="btn-io" onclick="openShareModal('json')" title="Exporter JSON">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <svg width="40" height="18" viewBox="0 0 40 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Écran (gauche) -->
+      <rect x="1" y="2" width="10" height="8" rx="1.2"/>
+      <line x1="4" y1="10" x2="8" y2="10"/>
+      <line x1="6" y1="10" x2="6" y2="12.5"/>
+      <line x1="4" y1="12.5" x2="8" y2="12.5"/>
+      <!-- Flèche pointant à gauche -->
+      <line x1="28" y1="7" x2="14" y2="7"/>
+      <polyline points="18,4 14,7 18,10"/>
+      <!-- Document (droite) -->
+      <path d="M31 2h5.5l2.5 2.5V16a1 1 0 01-1 1H31a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+      <polyline points="36.5 2 36.5 4.5 39 4.5"/>
+    </svg>
   </button>
-  <button class="btn-io" onclick="$('importInput').click()" title="Importer">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+  <button class="btn-io" onclick="$('importInput').click()" title="Importer JSON">
+    <svg width="40" height="18" viewBox="0 0 40 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Écran (gauche) -->
+      <rect x="1" y="2" width="10" height="8" rx="1.2"/>
+      <line x1="4" y1="10" x2="8" y2="10"/>
+      <line x1="6" y1="10" x2="6" y2="12.5"/>
+      <line x1="4" y1="12.5" x2="8" y2="12.5"/>
+      <!-- Flèche pointant à droite -->
+      <line x1="14" y1="7" x2="28" y2="7"/>
+      <polyline points="24,4 28,7 24,10"/>
+      <!-- Document (droite) -->
+      <path d="M31 2h5.5l2.5 2.5V16a1 1 0 01-1 1H31a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+      <polyline points="36.5 2 36.5 4.5 39 4.5"/>
+    </svg>
   </button>
   <button class="btn-pdf" id="pdfBtn" onclick="openShareModal('pdf')">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -164,14 +191,14 @@
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button class="share-action-btn" onclick="shareAction('save')">
         <span class="share-icon">💾</span>
-        <div><div class="share-lbl">Enregistrer sur l'appareil</div><div class="share-sub">Téléchargement direct</div></div>
+        <div><div class="share-lbl" id="share-lbl-save">Enregistrer sur l'appareil</div><div class="share-sub" id="share-sub-save">Téléchargement direct</div></div>
       </button>
       <button class="share-action-btn" id="share-btn-native" style="display:none;" onclick="shareAction('native')">
         <span class="share-icon">📤</span>
-        <div><div class="share-lbl">Autres applications...</div><div class="share-sub">WhatsApp, Drive, Messages...</div></div>
+        <div><div class="share-lbl" id="share-lbl-native">Autres applications...</div><div class="share-sub" id="share-sub-native">WhatsApp, Drive, Messages...</div></div>
       </button>
     </div>
-    <button onclick="closeShareModal()" style="margin-top:12px;background:none;border:none;color:var(--muted);font-size:13px;padding:8px;cursor:pointer;text-decoration:underline;width:100%;">Annuler</button>
+    <button onclick="closeShareModal()" id="share-cancel-btn" style="margin-top:12px;background:none;border:none;color:var(--muted);font-size:13px;padding:8px;cursor:pointer;text-decoration:underline;width:100%;">Annuler</button>
   </div>
 </div>
 
@@ -211,6 +238,12 @@
   </div>
 </div>
 
+<div id="update-bar" class="update-bar">
+  <div class="update-bar-txt">🔄 Nouvelle version disponible !</div>
+  <button class="update-bar-btn" onclick="applyUpdate()">Mettre à jour</button>
+  <button onclick="document.getElementById('update-bar').classList.remove('show')" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 0 0 4px;flex-shrink:0;">×</button>
+</div>
+
 <script src="pdf-lib.min.js"></script>
 <script src="logo.js"></script>
 <script src="i18n.js"></script>
@@ -219,12 +252,46 @@
 <script src="signature.js"></script>
 
 <script>
+let _newSW = null;
+
+function applyUpdate() {
+  if (_newSW) _newSW.postMessage('skipWaiting');
+  window.location.reload();
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('SW registered:', reg.scope))
+      .then(reg => {
+        if (reg.waiting) showUpdateBar(reg.waiting);
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBar(newSW);
+            }
+          });
+        });
+      })
       .catch(err => console.warn('SW registration failed:', err));
+    // Pas de controllerchange auto-reload — rechargement uniquement sur clic utilisateur
   });
+}
+
+function showUpdateBar(sw) {
+  _newSW = sw;
+  const bar = document.getElementById('update-bar');
+  if (!bar) return;
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+  const msgs = {
+    fr: { txt: '🔄 Nouvelle version disponible !', btn: 'Mettre à jour' },
+    de: { txt: '🔄 Neue Version verfügbar!',       btn: 'Aktualisieren' },
+    it: { txt: '🔄 Nuova versione disponibile!',   btn: 'Aggiornare' }
+  };
+  const m = msgs[lang] || msgs.fr;
+  bar.querySelector('.update-bar-txt').textContent = m.txt;
+  bar.querySelector('.update-bar-btn').textContent = m.btn;
+  bar.classList.add('show');
 }
 </script>
 </body>
