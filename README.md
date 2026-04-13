@@ -1,6 +1,6 @@
-# ⚡ Protocole Premières Vérifications 
+# ⚡ Protocole Premières Vérifications — SBB CFF FFS
 
-Application web mobile (PWA-ready) pour remplir et générer le protocole de **premières vérifications par l'installateur électricien** selon les normes OIBT.
+Application web mobile (PWA-ready) pour remplir et générer le protocole de **premières vérifications par l'installateur électricien** selon les normes SBB CFF FFS.
 
 > Fonctionne **100% hors ligne** — aucun serveur requis. Ouvrir le fichier HTML directement dans un navigateur mobile (Android / iOS) ou desktop.
 
