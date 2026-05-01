@@ -27,7 +27,7 @@ async function buildPDFBlob(){
   const clip=(s,mxW,sz,f)=>{let r=String(s||'');while(r.length>0&&f.widthOfTextAtSize(r,sz)>mxW)r=r.slice(0,-1);return r;};
 
   const D={};
-  ['nom_installation','num_tableau','page','objet','num_compteur','cc_general','cc_abonne','tension','instrument','num_inventaire','facteur_icc','valeur_facteur','nom_prenom','lieu','date_sig','remarques'].forEach(k=>D[k]=gv(k));
+  ['nom_installation','num_tableau','page','objet','num_compteur','fournisseur','remarques_install','cc_general','cc_abonne','tension','instrument','num_inventaire','facteur_icc','valeur_facteur','nom_prenom','lieu','date_sig','remarques'].forEach(k=>D[k]=gv(k));
   D.vc={};for(let i=1;i<=8;i++)D.vc['vc'+i]=gv('vc'+i);
   D.circuits=circuitIds.filter(id=>!!$('cc-'+id)).map(id=>({groupe:gv('groupe_'+id),desig:gv('desig_'+id),ctype:gv('ctype_'+id),csect:gv('csect_'+id),courbe:gv('courbe_'+id),inom:gv('inom_'+id),icc_max_lpe:gv('icc_max_lpe_'+id),icc_min_lpe:gv('icc_min_lpe_'+id),icc_max_ln:gv('icc_max_ln_'+id),icc_min_ln:gv('icc_min_ln_'+id),riso:gv('riso_'+id),rlo:gv('rlo_'+id),ddr_inom:gv('ddr_inom_'+id),ddr_idelta:gv('ddr_idelta_'+id),ddr_temps:gv('ddr_temps_'+id),champ:gv('champ_'+id),chute:gv('chute_'+id),rem:gv('rem_'+id),
     collab_nom:(($('collab_signed_'+id)&&$('collab_signed_'+id).checked)?gv('nom_prenom'):(gv('collab_nom_'+id)||'')),
@@ -35,24 +35,37 @@ async function buildPDFBlob(){
   }));
 
   // 1. HEADER — aligné sur les marges du tableau
-  const HH=20*MM;
+  const HH=15*MM;
   R(ML,H-HH,W-ML-MR,HH,NAVY);
-  Txt(T.pdfTitle,ML+2*MM,H-HH+13*MM,8.5,fB,WHITE);
-  Txt(T.pdfNomInst+"  "+clip(D.nom_installation,180*MM,7,fR),ML+2*MM,H-HH+7*MM,7,fR,WHITE);
+  Txt(T.pdfTitle,ML+2*MM,H-HH+9*MM,8,fB,WHITE);
+  Txt(T.pdfNomInst+"  "+clip(D.nom_installation,180*MM,6.5,fR),ML+2*MM,H-HH+3.5*MM,6.5,fR,WHITE);
   // Page number top-right, logo à sa gauche
   const logoH=4*MM, logoW=logoH*(logoJpgImg.width/logoJpgImg.height);
   TxtR(T.pdfPage+" "+(D.page||'01'),W-MR-2*MM,H-HH+HH/2,7,fR,WHITE);
   page.drawImage(logoJpgImg,{x:W-MR-2*MM-logoW-15*MM, y:H-HH+(HH-logoH)/2, width:logoW, height:logoH});
 
   // 2. BANDEAU INFO — aligné sur les marges du tableau
-  const IY=H-HH,IH=13*MM;
+  const hasExtra = !!(D.fournisseur || D.remarques_install);
+  const IH = hasExtra ? 18*MM : 13*MM;
+  const IY=H-HH;
   R(ML,IY-IH,W-ML-MR,IH,LGRAY);SR(ML,IY-IH,W-ML-MR,IH,MGRAY,.4);
   const kv=(lbl,val,x,y,mxV)=>{Txt(lbl,x,y,6.5,fB,NAVY);const lw=fB.widthOfTextAtSize(lbl,6.5);Txt(clip(val,mxV||80*MM,6.5,fR),x+lw+2,y,6.5,fR,BLACK);};
-  kv(T.pdfObjet,D.objet,ML+2*MM,IY-IH+8.5*MM,55*MM);
-  kv(T.pdfNumTab,D.num_tableau,95*MM,IY-IH+8.5*MM,30*MM);
-  kv(T.pdfNumCpt,D.num_compteur,ML+2*MM,IY-IH+3.5*MM,40*MM);
-  kv(T.pdfCcGen,D.cc_general||"—",75*MM,IY-IH+3.5*MM,50*MM);
-  kv(T.pdfCcAbo,D.cc_abonne||"—",175*MM,IY-IH+3.5*MM,45*MM);
+  const ly1 = hasExtra ? IY-IH+13.5*MM : IY-IH+8.5*MM;
+  const ly2 = hasExtra ? IY-IH+8.5*MM  : IY-IH+3.5*MM;
+  kv(T.pdfObjet,D.objet,ML+2*MM,ly1,55*MM);
+  kv(T.pdfNumTab,D.num_tableau,95*MM,ly1,30*MM);
+  kv(T.pdfNumCpt,D.num_compteur,ML+2*MM,ly2,40*MM);
+  kv(T.pdfCcGen,D.cc_general||"—",75*MM,ly2,50*MM);
+  kv(T.pdfCcAbo,D.cc_abonne||"—",175*MM,ly2,45*MM);
+  if(hasExtra){
+    const ly3=IY-IH+3.5*MM;
+    if(D.fournisseur) kv(T.pdfFournisseur||'Fournisseur:',D.fournisseur,ML+2*MM,ly3,80*MM);
+    if(D.remarques_install){
+      const remLbl=T.pdfRemarquesInstall||'Remarques:';
+      const remX=D.fournisseur?140*MM:ML+2*MM;
+      kv(remLbl,D.remarques_install,remX,ly3,W-MR-remX-10*MM);
+    }
+  }
 
   // 3. TABLEAU
   const BZH=57*MM,TBOT=6*MM+BZH,TTOP=IY-IH,TH=TTOP-TBOT,TW=W-ML-MR;
@@ -61,9 +74,9 @@ async function buildPDFBlob(){
   const CW=rawCW.map(x=>(x/sumCW)*TW);
   const colX=ci=>{let x=ML;for(let i=0;i<ci;i++)x+=CW[i];return x;};
   const HRA=6.5*MM,HRB=8*MM;
-  // Calculer automatiquement le nb de lignes pour remplir toute la hauteur
-  const HRD=Math.max(Math.min((TH-HRA-HRB)/18, 5.5*MM), 3.2*MM);
-  const NRD=Math.floor((TH-HRA-HRB)/HRD);
+  // 18 lignes de données + 2 lignes d'en-tête = 20 lignes au total
+  const NRD=18;
+  const HRD=Math.max(Math.min((TH-HRA-HRB)/NRD, 5.5*MM), 3.2*MM);
   let circuits=[...D.circuits];while(circuits.length<NRD)circuits.push({});
   // rowY(ri) = Y du bord INFERIEUR de la ligne ri (pdf-lib: y croît vers le haut)
   // ri=0 → rowA (en haut du tableau), ri=1 → rowB, ri>=2 → lignes data

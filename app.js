@@ -35,6 +35,8 @@ function applyLang() {
   st('lbl-page', T.lblPage);
   st('lbl-objet', T.lblObjet);
   st('lbl-compteur', T.lblCompteur);
+  st('lbl-fournisseur', T.lblFournisseur);
+  st('lbl-remarques-install', T.lblRemarquesInstall);
   st('lbl-cc-gen', T.lblCcGen);
   st('lbl-cc-abo', T.lblCcAbo);
   st('lbl-tension', T.lblTension);
@@ -70,7 +72,7 @@ const SKEY='sbb_proto_v3';
 let circuitIds=[],nextId=1,autoTimer=null;
 const $=id=>document.getElementById(id);
 function gv(id){const e=$(id);if(!e)return'';return e.type==='checkbox'?e.checked:(e.value||'');}
-function sv(id,v){const e=$(id);if(!e)return;e.type==='checkbox'?e.checked=!!v:e.value=v;}
+function sv(id,v){const e=$(id);if(!e)return;e.type==='checkbox'?e.checked=!!v:e.value=(v==null?'':v);}
 function showToast(msg,dur=2200){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
 function markUnsaved(){$('saveDot').className='dot unsaved';$('saveTxt').textContent=I18N[currentLang].unsaved;}
 function markSaved(){$('saveDot').className='dot';$('saveTxt').textContent=I18N[currentLang].saved;}
@@ -109,8 +111,8 @@ function addCircuit(data){
           <label data-lbl="lblCtype" style="font-size:9.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.2px;margin:0;">${T.lblCtype}</label>
           <button type="button" onclick="showCableHelp()" style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--navy);background:var(--navy);color:#fff;font-size:9px;font-weight:700;cursor:pointer;line-height:1;padding:0;flex-shrink:0;" title="Aide">i</button>
         </div>
-        <input type="text" id="ctype_${id}" value="${(data&&data.ctype)||''}" placeholder="NYM" list="ctype-list" autocomplete="off"/>
-        <datalist id="ctype-list"><option value="H07V-U"/><option value="CH-N1VV-U"/><option value="H05VV-F"/><option value="CH-N1VV-K"/><option value="H07BQ-F"/><option value="CH-N1VCV-U"/></datalist>
+        <input type="text" id="ctype_${id}" value="${(data&&data.ctype)||''}" placeholder="FE05C" list="ctype-list" autocomplete="off"/>
+        <datalist id="ctype-list"><option value="FE05C"/><option value="FE0D"/><option value="TT"/><option value="PUR-PUR"/></datalist>
       </div>
       <div class="mf"><label data-lbl="lblCsect">${T.lblCsect}</label><input type="text" id="csect_${id}" value="${(data&&data.csect)||''}" placeholder="3×2.5 mm²"/></div>
     </div>
@@ -172,15 +174,29 @@ function removeCircuit(id){
 }
 
 // ── Aide-mémoire câbles ──────────────────────────────────────
+const CABLE_CLASS_COLORS = {
+  'Aca':'#e53935', 'B1ca':'#1565c0', 'B2ca':'#00838f',
+  'Cca':'#f9a825', 'Dca':'#6a1b9a', 'Eca':'#e91e63', 'Fca':'#c62828'
+};
 function showCableHelp(){
   const T=I18N[currentLang];
-  document.getElementById('cable-help-tbody').innerHTML=T.cableTable.map(r=>
-    '<tr><td style="padding:6px 8px;border-bottom:1px solid #e8ebf5;font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;">'+r[0]+'</td><td style="padding:6px 8px;border-bottom:1px solid #e8ebf5;font-size:12px;font-weight:600;white-space:nowrap;">'+r[1]+'</td><td style="padding:6px 8px;border-bottom:1px solid #e8ebf5;font-size:12px;color:var(--muted);line-height:1.4;">'+r[2]+'</td></tr>'
-  ).join('');
-  document.getElementById('cable-help-title').textContent=T.cableHelpTitle||'Types de câbles';
-  document.getElementById('cable-help-col1').textContent=T.cableCol1||'Nom courant';
-  document.getElementById('cable-help-col2').textContent=T.cableCol2||'Désignation';
-  document.getElementById('cable-help-col3').textContent=T.cableCol3||'Description';
+  document.getElementById('cable-help-tbody').innerHTML=T.cableTable.map(r=>{
+    const cls=r[0];
+    const color=CABLE_CLASS_COLORS[cls]||'#333';
+    const isAca=cls==='Aca';
+    const badge=isAca
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:2.5px solid ${color};font-size:11px;font-weight:800;color:${color};position:relative;"><span style="text-decoration:line-through;">${cls}</span><svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 36 36"><line x1="6" y1="6" x2="30" y2="30" stroke="${color}" stroke-width="2.5"/></svg></span>`
+      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:2.5px solid ${color};font-size:11px;font-weight:800;color:${color};">${cls}</span>`;
+    return '<tr>'
+      +'<td style="padding:7px 8px;border-bottom:1px solid #e8ebf5;text-align:center;">'+badge+'</td>'
+      +'<td style="padding:7px 8px;border-bottom:1px solid #e8ebf5;font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;text-align:center;">'+r[1]+'</td>'
+      +'<td style="padding:7px 8px;border-bottom:1px solid #e8ebf5;font-size:12px;color:var(--muted);line-height:1.4;">'+r[2]+'</td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('cable-help-title').textContent=T.cableHelpTitle||'Classe de feu — Types de câbles';
+  document.getElementById('cable-help-col1').textContent=T.cableCol1||'Classe de feu';
+  document.getElementById('cable-help-col2').textContent=T.cableCol2||'Type de câble';
+  document.getElementById('cable-help-col3').textContent=T.cableCol3||'Caractéristiques au feu';
   document.getElementById('cable-help-modal').style.display='flex';
 }
 function closeCableHelp(){document.getElementById('cable-help-modal').style.display='none';}
@@ -190,7 +206,7 @@ function updateBadge(){$('cct').textContent=circuitIds.length;}
 // ═══════════════════════════════════════════════════════════
 // SAVE / LOAD
 // ═══════════════════════════════════════════════════════════
-const FIELDS=['nom_installation','num_tableau','page','objet','num_compteur','cc_general','cc_abonne','tension','instrument','num_inventaire','facteur_icc','valeur_facteur','vc1','vc2','vc3','vc4','vc5','vc6','vc7','vc8','remarques','nom_prenom','lieu','date_sig'];
+const FIELDS=['nom_installation','num_tableau','page','objet','num_compteur','fournisseur','remarques_install','cc_general','cc_abonne','tension','instrument','num_inventaire','facteur_icc','valeur_facteur','vc1','vc2','vc3','vc4','vc5','vc6','vc7','vc8','remarques','nom_prenom','lieu','date_sig'];
 function saveData(){
   const d={lang:currentLang};
   FIELDS.forEach(f=>d[f]=gv(f));
